@@ -36,6 +36,7 @@ PY
 Install TensorRT 8.x for CUDA 11.x
 
 attempt 2
+Expose the shared libs at runtime:
 ```
 # example — adjust to your exact file name & location
 tar -xzf TensorRT-8.2.5.*.Linux.x86_64-gnu.cuda-11.*.cudnn8.*.tar.gz
