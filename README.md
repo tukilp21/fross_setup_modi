@@ -1,2 +1,21 @@
 # testing_com
 for transferring command line :)
+
+# fresh venv recommended
+python -m pip install --upgrade pip wheel setuptools
+
+# A) Install Torch 1.9.1 CUDA 11.1 wheels
+pip install torch==1.9.1+cu111 torchvision==0.10.1+cu111 torchaudio==0.9.1 \
+  -f https://download.pytorch.org/whl/torch_stable.html
+# (These are the official cu111 binaries.) :contentReference[oaicite:2]{index=2}
+
+# B) Install your CPU-safe deps
+pip install -r requirements-cuda11_legacy.txt
+
+# C) Install PyG extensions from the matching cu111 wheel index
+pip install -f https://data.pyg.org/whl/torch-1.9.1+cu111.html \
+  torch-scatter==2.0.8 torch-sparse==0.6.12 torch-cluster==1.5.9 torch-spline-conv==1.2.1
+
+# D) Install PyG core
+pip install torch-geometric==2.0.4
+# (PyG ships versioned wheel indices per Torch+CUDA; using the right index avoids source builds.) :contentReference[oaicite:3]{index=3}
