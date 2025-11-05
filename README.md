@@ -13,13 +13,13 @@ for transferring command line while implementing [FROSS](https://github.com/Howa
 
 ## Env / Dir setup
 
-dep install
+fresh install
 ```
-# fresh venv recommended
 python -m pip install --upgrade wheel setuptools
-# required for older packages - install on python 3.8
+# required for installing older packages - install on python 3.8
 python -m pip install "pip==23.2.1"
 ```
+
 Install Torch 1.9.1 CUDA 11.1 wheels
 ```
 pip install torch==1.9.1+cu111 torchvision==0.10.1+cu111 torchaudio==0.9.1 -f https://download.pytorch.org/whl/torch_stable.html
@@ -93,6 +93,16 @@ cd TensorRT-8.2.5.1
 python -m pip install python/tensorrt-8.2.5.1-cp38-none-linux_x86_64.whl
 ```
 
+*CHECKING FIRST*
+```
+export TRT_DIR="$HOME/opt/TensorRT-8.2.5.1"
+echo "--- libnvinfer_plugin.so deps ---"
+ldd "$TRT_DIR/lib/libnvinfer_plugin.so" | egrep -i 'cudart|cublas|cublasLt|cudnn|cufft|not found' || true
+```
+where
+- `ldd` Runs the ldd command to list all shared libraries required by libnvinfer.so.
+- `egrep` = grep - e --> allow grep with native support for extended regular expressions such as | (OR), ...
+
 Make sure the loader can find the runtime libs from your apt install:
 ```
 # point to TensorRT's lib directory from the tar
@@ -143,4 +153,30 @@ sudo apt-get install -y \
 
 # (optional) utilities
 sudo apt-get install -y uff-converter-tf
+```
+
+### Install new driver
+```
+# blacklist Nouveau (open-source driver) so it won't grab the GPU at boot
+echo -e "blacklist nouveau\noptions nouveau modeset=0" | sudo tee /etc/modprobe.d/blacklist-nouveau.conf
+sudo update-initramfs -u
+
+```
+Press Ctrl+Alt+F3 to get to TTY, log in, then:
+```
+sudo systemctl stop gdm 2>/dev/null || sudo systemctl stop lightdm 2>/dev/null || true
+```
+From the directory where you downloaded NVIDIA-Linux-x86_64-580.105.08.run:
+```
+chmod +x NVIDIA-Linux-x86_64-580.105.08.run
+sudo ./NVIDIA-Linux-x86_64-580.105.08.run --dkms --no-cc-version-check
+```
+- `--dkms` lets the module rebuild with kernel updates.
+- If the installer asks to disable Nouveau, let it write the blacklist (you already did) and proceed.
+- If Secure Boot is enabled, the installer will warn that the kernel module can’t load unsigned; either enroll a MOK/sign or disable Secure Boot in BIOS.
+
+final step
+```
+sudo reboot
+nvidia-smi
 ```
