@@ -63,11 +63,7 @@ pip install -r custom_requirement.txt
   ```
 </details>
 
-_Quick validation_
-```
-print("PyG OK:", torch_geometric.__version__)
-```
-
+---
 Install TensorRT 8.x for CUDA 11.x
 
 Download a CUDA-11.x TensorRT tarball (x86_64) from NVIDIA archives — TensorRT 8.2.5 is a good fit and explicitly supports CUDA 11.0–11.5 (incl. 11.2). [NVIDIA Docs](https://docs.nvidia.com/deeplearning/tensorrt/archives/tensorrt-825/install-guide/index.html)
@@ -92,16 +88,6 @@ tar -xzf TensorRT-8.2.5.1.Linux.x86_64-gnu.cuda-11.*.tar.gz
 cd TensorRT-8.2.5.1
 python -m pip install python/tensorrt-8.2.5.1-cp38-none-linux_x86_64.whl
 ```
-
-*CHECKING FIRST*
-```
-export TRT_DIR="$HOME/opt/TensorRT-8.2.5.1"
-echo "--- libnvinfer_plugin.so deps ---"
-ldd "$TRT_DIR/lib/libnvinfer_plugin.so" | egrep -i 'cudart|cublas|cublasLt|cudnn|cufft|not found' || true
-```
-where
-- `ldd` Runs the ldd command to list all shared libraries required by libnvinfer.so.
-- `egrep` = grep - e --> allow grep with native support for extended regular expressions such as | (OR), ...
 
 Make sure the loader can find the runtime libs from your apt install:
 ```
@@ -143,8 +129,11 @@ If unsure which CUDA libs are missing:
 export TRT_DIR="$HOME/opt/TensorRT-8.2.5.1"
 ldd "$TRT_DIR/lib/libnvinfer.so" | egrep 'cudart|cublas|cudnn|cufft|not found'
 # or
-ldd "$TRT_DIR/lib/libnvinfer_plugin.so" | egrep 'cudart|cublas|cudnn|cufft|not found'
+ldd "$TRT_DIR/lib/libnvinfer_plugin.so" | egrep -i 'cudart|cublas|cublasLt|cudnn|cufft|not found' || true
 ```
+where
+- `ldd` Runs the ldd command to list all shared libraries required by libnvinfer.so.
+- `egrep` = grep - e --> allow grep with native support for extended regular expressions such as | (OR), ...
 
 validation
 ```
@@ -157,7 +146,40 @@ PY
 command -v trtexec && trtexec --version
 ```
 
-!!!!!!!!!!!!!!!!
+if continue with CUDA 11.4 (or 11.2) - after new driver installed lol
+```
+sudo apt-get install -y cuda-cudart-11-4 libcublas-11-4 libcudnn8
+
+# or
+
+mkdir -p $HOME/opt/cuda114-extract
+sh cuda_11.4.4_470.82.01_linux.run --noexec --keep --target $HOME/opt/cuda114-extract
+# unpack only toolkit libraries
+mkdir -p $HOME/opt/cuda-11.4/lib64
+# locate the toolkit payload (a .tar.xz) and extract only lib64/*
+TOOLKIT_TAR=$(find "$HOME/opt/cuda114-extract" -type f -name "cuda-toolkit-*.tar.xz" | head -n1)
+tar -xJf "$TOOLKIT_TAR" -C "$HOME/opt/cuda-11.4" --wildcards 'cuda-toolkit/*/targets/x86_64-linux/lib/*'
+# flatten to .../lib64
+find "$HOME/opt/cuda-11.4" -type f -path '*/targets/x86_64-linux/lib/*' -exec bash -lc 'mkdir -p "$HOME/opt/cuda-11.4/lib64"; mv "$0" "$HOME/opt/cuda-11.4/lib64/"' {} \;
+# optional: remove staging directory to reclaim space
+rm -rf "$HOME/opt/cuda114-extract"
+
+```
+   
+
+1. Install TensorRT runtime + Python bindings
+```
+sudo apt-get update
+sudo apt-get install -y \
+  tensorrt \
+  libnvinfer8 libnvinfer-plugin8 libnvonnxparsers8 libnvparsers8 \
+  python3-libnvinfer python3-libnvinfer-dev
+
+# (optional) utilities
+sudo apt-get install -y uff-converter-tf
+```
+
+----------------
 Permanently setup env PATH
 ```
 mkdir -p "$(conda info --base)/envs/fross-tst38/etc/conda/activate.d"
@@ -177,23 +199,34 @@ export LD_LIBRARY_PATH=$(echo "$LD_LIBRARY_PATH" | sed "s|$HOME/opt/TensorRT-8.2
 export PATH=$(echo "$PATH" | sed "s|$HOME/opt/TensorRT-8.2.5.1/bin:||")
 EOF
 ```
-   
-
-1. Install TensorRT runtime + Python bindings
+--------------------------------
+Check current disk usage - specifically root usage
 ```
-sudo apt-get update
-sudo apt-get install -y \
-  tensorrt \
-  libnvinfer8 libnvinfer-plugin8 libnvonnxparsers8 libnvparsers8 \
-  python3-libnvinfer python3-libnvinfer-dev
-
-# (optional) utilities
-sudo apt-get install -y uff-converter-tf
+df -h /
 ```
 
----
+Then see what directories are biggest:
+```
+sudo du -hxd1 | sort -h | tail
+```
+```
+sudo snap list --all | awk '/disabled/{print $1, $3}' | while read snapname revision; do
+    sudo snap remove "$snapname" --revision="$revision"
+done
+```
+--------------------------------
+--------------------------------
 ### Install new driver
+
+download from [nvidia.com](https://www.nvidia.com/en-us/drivers/)
+
+> .run installs are “manual”. They’re fine, but you must stop X, blacklist nouveau, and have kernel headers. If Secure Boot is enabled, you’ll need to disable it or sign the kernel module.
+
 ```
+# packages needed to build the kernel module
+sudo apt-get update
+sudo apt-get install -y build-essential dkms linux-headers-$(uname -r)
+
 # blacklist Nouveau (open-source driver) so it won't grab the GPU at boot
 echo -e "blacklist nouveau\noptions nouveau modeset=0" | sudo tee /etc/modprobe.d/blacklist-nouveau.conf
 sudo update-initramfs -u
