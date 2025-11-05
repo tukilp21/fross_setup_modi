@@ -209,11 +209,6 @@ Then see what directories are biggest:
 ```
 sudo du -hxd1 | sort -h | tail
 ```
-```
-sudo snap list --all | awk '/disabled/{print $1, $3}' | while read snapname revision; do
-    sudo snap remove "$snapname" --revision="$revision"
-done
-```
 --------------------------------
 --------------------------------
 ### Install new driver
