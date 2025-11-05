@@ -12,8 +12,8 @@ plyfile==1.1
 pycocotools==2.0.5
 pyvips==2.2.3
 
-# transformers (newer releases generally ok, but if you see torch-version checks, pin to ~4.30)
-transformers==4.53.2
+# transformers (lower version to use DetrFeatureExtractor as in the code)
+transformers==4.30.1
 
 # ONNX (CPU)
 onnx==1.15.0
