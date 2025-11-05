@@ -5,7 +5,9 @@ https://chatgpt.com/share/690adfa4-5648-8005-b49e-a7a68402671b
 
 ```
 # fresh venv recommended
-`python -m pip install --upgrade pip wheel setuptools`
+python -m pip install --upgrade wheel setuptools
+# required for older packages - install on python 3.8
+python -m pip install "pip==23.2.1"
 
 # A) Install Torch 1.9.1 CUDA 11.1 wheels
 pip install torch==1.9.1+cu111 torchvision==0.10.1+cu111 torchaudio==0.9.1 \
