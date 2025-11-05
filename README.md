@@ -10,8 +10,9 @@ pip install torch==1.9.1+cu111 torchvision==0.10.1+cu111 torchaudio==0.9.1 \
   -f https://download.pytorch.org/whl/torch_stable.html
 # (These are the official cu111 binaries.) :contentReference[oaicite:2]{index=2}
 
-# B) Install your CPU-safe deps
-pip install -r requirements-cuda11_legacy.txt
+# B) Install your CPU-safe deps - with lower pip version to install pytorch-lightning==1.7.7 
+python -m pip install "pip==23.2.1"
+pip install -r cpu_safe_requirement.txt
 
 # C) Install PyG extensions from the matching cu111 wheel index
 pip install -f https://data.pyg.org/whl/torch-1.9.1+cu111.html \
