@@ -16,7 +16,7 @@ pyvips==2.2.3
 transformers==4.30.1
 
 # ONNX (CPU)
-onnx==1.15.0
+onnx==1.12.0
 onnxruntime==1.19.0
 
 # PyTorch (CUDA 11.1 wheels) — install via commands below, not here
