@@ -32,4 +32,6 @@ onnxruntime==1.19.0
 # torch-spline-conv==1.2.1
 
 # Lightning (must match torch 1.9.x)
-pytorch-lightning==1.7.7
+# pytorch-lightning==1.7.7 # for python 3.9
+# for python 3.8 - after install tensorrt for ubuntu18.04 - with cp38
+pytorch-lightning==1.6.5
