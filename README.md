@@ -3,15 +3,67 @@ for transferring command line while implementing [FROSS](https://github.com/Howa
 
 [ChatGPT instruction](https://chatgpt.com/share/690adfa4-5648-8005-b49e-a7a68402671b)
 
-## Note
-- to deal with [root running out of memory](https://askubuntu.com/questions/57994/root-drive-is-running-out-of-disk-space-how-can-i-free-up-space)
-
----
-
 ## Dataset
 [download script](https://gist.github.com/WaldJohannaU/55f5e35992ea91157b789b15eac4d432) for 3RScan dataset
 
-## Env / Dir setup
+## Note
+- to deal with [root running out of memory](https://askubuntu.com/questions/57994/root-drive-is-running-out-of-disk-space-how-can-i-free-up-space)
+```
+# check disk usage
+df -h /
+# rank biggest directories
+sudo du -hxd1 | sort -h | tail
+```
+
+- install new driver (580 for ubuntu 18.04) for CUDA 12.1 capability - try whatever packages version they suggested
+- 
+
+
+
+--------------------------------
+--------------------------------
+### Install new driver
+
+download from [nvidia.com](https://www.nvidia.com/en-us/drivers/)
+
+> .run installs are “manual”. They’re fine, but you must stop X, blacklist nouveau, and have kernel headers. If Secure Boot is enabled, you’ll need to disable it or sign the kernel module.
+
+```
+# packages needed to build the kernel module
+sudo apt-get update
+sudo apt-get install -y build-essential dkms linux-headers-$(uname -r)
+
+# blacklist Nouveau (open-source driver) so it won't grab the GPU at boot
+echo -e "blacklist nouveau\noptions nouveau modeset=0" | sudo tee /etc/modprobe.d/blacklist-nouveau.conf
+sudo update-initramfs -u
+
+```
+Press Ctrl+Alt+F3 to get to TTY, log in, then:
+```
+sudo systemctl stop gdm 2>/dev/null || sudo systemctl stop lightdm 2>/dev/null || true
+```
+- `systemctl stop gdm`: Stop the GNOME Display Manager (used by Ubuntu GNOME / GNOME Shell). If your system uses GNOME, this will end the login screen and desktop session.
+- `2>/dev/null`: Redirect error messages (“stderr”) to `/dev/null` (i.e., discard them).
+- `systemctl stop lightdm`: Stop the LightDM service (used by older Ubuntu and Xfce variants).
+- `systemctl stop sddm`: Stop the Simple Desktop Display Manager (used by **KDE** Plasma).
+
+From the directory where you downloaded NVIDIA-Linux-x86_64-580.105.08.run:
+```
+chmod +x NVIDIA-Linux-x86_64-580.105.08.run
+sudo ./NVIDIA-Linux-x86_64-580.105.08.run --dkms --no-cc-version-check
+```
+- `--dkms` lets the module rebuild with kernel updates.
+- If the installer asks to disable Nouveau, let it write the blacklist (you already did) and proceed.
+- If Secure Boot is enabled, the installer will warn that the kernel module can’t load unsigned; either enroll a MOK/sign or disable Secure Boot in BIOS.
+
+final step
+```
+sudo reboot
+nvidia-smi
+```
+---
+
+## Env / Dir setup - for Cuda 11.1 (previously)
 
 fresh install
 ```
@@ -200,53 +252,4 @@ export PATH=$(echo "$PATH" | sed "s|$HOME/opt/TensorRT-8.2.5.1/bin:||")
 EOF
 ```
 --------------------------------
-Check current disk usage - specifically root usage
-```
-df -h /
-```
 
-Then see what directories are biggest:
-```
-sudo du -hxd1 | sort -h | tail
-```
---------------------------------
---------------------------------
-### Install new driver
-
-download from [nvidia.com](https://www.nvidia.com/en-us/drivers/)
-
-> .run installs are “manual”. They’re fine, but you must stop X, blacklist nouveau, and have kernel headers. If Secure Boot is enabled, you’ll need to disable it or sign the kernel module.
-
-```
-# packages needed to build the kernel module
-sudo apt-get update
-sudo apt-get install -y build-essential dkms linux-headers-$(uname -r)
-
-# blacklist Nouveau (open-source driver) so it won't grab the GPU at boot
-echo -e "blacklist nouveau\noptions nouveau modeset=0" | sudo tee /etc/modprobe.d/blacklist-nouveau.conf
-sudo update-initramfs -u
-
-```
-Press Ctrl+Alt+F3 to get to TTY, log in, then:
-```
-sudo systemctl stop gdm 2>/dev/null || sudo systemctl stop lightdm 2>/dev/null || true
-```
-- `systemctl stop gdm`: Stop the GNOME Display Manager (used by Ubuntu GNOME / GNOME Shell). If your system uses GNOME, this will end the login screen and desktop session.
-- `2>/dev/null`: Redirect error messages (“stderr”) to `/dev/null` (i.e., discard them).
-- `systemctl stop lightdm`: Stop the LightDM service (used by older Ubuntu and Xfce variants).
-- `systemctl stop sddm`: Stop the Simple Desktop Display Manager (used by **KDE** Plasma).
-
-From the directory where you downloaded NVIDIA-Linux-x86_64-580.105.08.run:
-```
-chmod +x NVIDIA-Linux-x86_64-580.105.08.run
-sudo ./NVIDIA-Linux-x86_64-580.105.08.run --dkms --no-cc-version-check
-```
-- `--dkms` lets the module rebuild with kernel updates.
-- If the installer asks to disable Nouveau, let it write the blacklist (you already did) and proceed.
-- If Secure Boot is enabled, the installer will warn that the kernel module can’t load unsigned; either enroll a MOK/sign or disable Secure Boot in BIOS.
-
-final step
-```
-sudo reboot
-nvidia-smi
-```
